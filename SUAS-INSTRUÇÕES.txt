@@ -1,2 +1,5 @@
-Coloque aqui suas instruções ou comentários que ache útil/relevantes para possamos ler 
-quando estivermos avaliando a sua solução
+Para criar o log da partida foi usado o log4j(versao 1.2.17);
+O arquivo game.log serÃ¡ armazenado na pasta log na raiz do projeto.
+O metodo main do projeto estÃ¡ na classe Principal.
+Para desenvolver minha soluÃ§Ã£o foi utilizado o IDE Eclipse Juno com java 7.
+Nos testes unitarios foi usado JUnit 4 (fornecido pela IDE Eclipse).
