@@ -1,63 +1,124 @@
 package br.com.mauriciotsilva.jogo.partida;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
 
+import br.com.mauriciotsilva.jogo.Award;
 import br.com.mauriciotsilva.jogo.Jogador;
+import br.com.mauriciotsilva.jogo.estrutura.ItemModelavel;
+import br.com.mauriciotsilva.jogo.estrutura.Modelavel;
+import br.com.mauriciotsilva.jogo.io.ArquivoModelado;
 import br.com.mauriciotsilva.jogo.partida.rank.Ranking;
+import br.com.mauriciotsilva.jogo.util.Util;
 
 public class Partida {
 
-	private final Map<String, Object> sessao;
-	public static final int VELOCIDADE_MAXIMA = 10;
 	public static final String RANKING_STREAKER_PARTIDA = "partida.streaker.ranking";
 
-	private long id;
-	private int duracao = 60;
-	private int velocidade = 9;
+	private boolean finalizada;
+	private Jogador vencedor;
+	private Map<String, Object> sessao;
+	private List<Jogador> ranking;
 	private List<Jogador> jogadores;
-	private List<Evento> listaEvento;
+	private List<List<Fato>> grupoDeFatos;
 
-	public Partida() {
-		this(Arrays.asList(new Jogador("<WORLD>", false), new Jogador("Nick"),
-				new Jogador("Roman"), new Jogador("Jack"), new Jogador(
-						"Lincoln"), new Jogador("Zaphod")));
+	public Partida(Modelavel modelavel) {
 
+		inicializar();
+		criarGrupoDeFatos(modelavel);
+
+		iniciarExecucao();
+		finalizarExecucao();
 	}
 
-	public Partida(List<Jogador> jogadores) {
-		id = System.currentTimeMillis();
+	public static Partida carregarArquivo(String nomeArquivo)
+			throws IOException {
+		return new Partida(ArquivoModelado.carregar(nomeArquivo));
+	}
+
+	private void inicializar() {
+		finalizada = false;
+		jogadores = new ArrayList<Jogador>();
 		sessao = new HashMap<String, Object>();
-		this.jogadores = jogadores;
-		this.listaEvento = new ArrayList<Evento>();
 	}
 
-	public void iniciar() {
+	private void criarGrupoDeFatos(Modelavel modelavel) {
 
-		Timer timer = new Timer();
-		timer.schedule(new PartidaTimerTask(this), 0, 1000);
+		List<Fato> fatos = new ArrayList<Fato>();
+		for (ItemModelavel item : modelavel.getItens()) {
+			if (!item.isItemSistema()) {
+				fatos.add(Fato.criar(this, item));
+			}
+		}
+
+		grupoDeFatos = Util.groupList(fatos);
 	}
 
-	public void definirDuracao(int segundos) {
-		if (segundos <= 0)
-			throw new IllegalArgumentException("Select a number greater than 0");
-		this.duracao = segundos;
+	private void iniciarExecucao() {
+
+		for (List<Fato> fatos : grupoDeFatos) {
+
+			int countGrupo = 0;
+			for (Fato fato : fatos) {
+				countGrupo++;
+				executar(countGrupo, fato);
+			}
+		}
 	}
 
-	public void definirVelocidade(int velocidade) {
-		if (velocidade <= 0 || velocidade > 10)
-			throw new IllegalArgumentException(
-					"Select a number between 1 and 10");
-
-		this.velocidade = Partida.VELOCIDADE_MAXIMA - velocidade;
+	private void finalizarExecucao() {
+		definirRanking();
+		adicionarPremiacaoChuckNorris();
+		finalizada = true;
 	}
 
-	public void criarAtributoSessao(String chave, Object valor) {
+	void criarAtributoSessao(String chave, Object valor) {
 		sessao.put(chave, valor);
+	}
+
+	Jogador adicionarJogador(String nome) {
+
+		Jogador jogador = buscarJogador(nome);
+		if (jogador == null) {
+			return adicionar(criarJogador(nome));
+		}
+
+		return jogador;
+	}
+
+	private Jogador adicionar(Jogador jogador) throws IllegalStateException {
+
+		if (finalizada) {
+			throw new IllegalStateException("Match has already finished");
+		}
+
+		jogadores.add(jogador);
+		return jogador;
+	}
+
+	public Jogador buscarJogador(String nome) {
+
+		Jogador novoJogador = criarJogador(nome);
+		int index = jogadores.indexOf(novoJogador);
+
+		if (index < 0) {
+			return null;
+		}
+
+		return jogadores.get(index);
+	}
+
+	private Jogador criarJogador(String nome) {
+		return new Jogador(nome);
+	}
+
+	public Jogador obterStreaker() {
+		return obterAtributoSessao(RANKING_STREAKER_PARTIDA);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -65,37 +126,53 @@ public class Partida {
 		return (T) sessao.get(str);
 	}
 
-	public List<Jogador> listarJogadores() {
-		return jogadores;
+	private void executar(int count, Fato fato) {
+		fato.executar();
+		verificarStreaker(fato.getJogadorUm());
+		fato.adicionarPremiacaoPorMinuto(count);
 	}
 
 	public List<Jogador> listarRankingAssassinatos() {
 		return Ranking.rankingAssassitos(jogadores);
 	}
 
-	int getDuracao() {
-		return duracao;
+	private void definirRanking() {
+		ranking = listarRankingAssassinatos();
+		vencedor = ranking.get(0);
 	}
 
-	int getVelocidade() {
-		return velocidade;
+	private void adicionarPremiacaoChuckNorris() {
+		if (vencedor.getQuantidadeMorte() == 0) {
+			vencedor.adicionarAward(Award.NORRIS);
+		}
 	}
 
-	public List<Evento> getListaEvento() {
-		return listaEvento;
+	private void verificarStreaker(Jogador jogador) {
+
+		if (!jogador.isValido()) {
+			return;
+		}
+
+		Jogador streaker = obterAtributoSessao(RANKING_STREAKER_PARTIDA);
+		Comparator<Jogador> comparatorStreaker = new Ranking.ComparatorStreakers();
+
+		if (streaker == null) {
+			criarAtributoSessao(RANKING_STREAKER_PARTIDA, jogador.clone());
+
+		} else {
+			int resultado = comparatorStreaker.compare(streaker, jogador);
+			if (resultado > 0) {
+				criarAtributoSessao(RANKING_STREAKER_PARTIDA, jogador.clone());
+			}
+		}
+
 	}
 
-	void setListaEvento(List<Evento> listaEvento) {
-		this.listaEvento = listaEvento;
+	public Jogador getVencedor() {
+		return vencedor;
 	}
 
-	public long getId() {
-		return id;
+	public List<Jogador> getJogadores() {
+		return Collections.unmodifiableList(jogadores);
 	}
-
-	@Override
-	public String toString() {
-		return String.valueOf(id);
-	}
-
 }
