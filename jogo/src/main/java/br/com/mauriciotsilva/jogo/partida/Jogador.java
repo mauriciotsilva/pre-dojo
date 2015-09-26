@@ -30,8 +30,8 @@ public class Jogador implements Serializable, Comparable<Jogador>, Cloneable {
 	private Jogador(String nome, boolean valido) {
 		this.nome = nome;
 		this.valido = valido;
-		this.premios = new LinkedList<Premio>();
-		this.armaFavorita = new HashMap<String, Integer>();
+		this.premios = new LinkedList<>();
+		this.armaFavorita = new HashMap<>();
 	}
 
 	public void assassinar(String arma, Jogador outroJogador) {
