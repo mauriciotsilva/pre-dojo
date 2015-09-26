@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import br.com.mauriciotsilva.jogo.Jogador;
+import br.com.mauriciotsilva.jogo.partida.Jogador;
 
 public class TesteJogador {
 
@@ -29,7 +29,7 @@ public class TesteJogador {
 		jogador.assassinar(M16, null);
 	}
 
-	@Test(expected = UnsupportedOperationException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void testarTentativaDeSuicidio() {
 		jogador.assassinar(M16, jogador);
 	}
@@ -61,7 +61,7 @@ public class TesteJogador {
 		verificarContatores(jogadorInvalido, 0, 0, 0);
 		verificarContatores(jogador, 3, 3, 0);
 
-		Assert.assertEquals("Arma favorita nao confere", M16, jogador.obterNomeArmaFavorita());
+		Assert.assertEquals("Arma favorita nao confere", M16, jogador.getNomeArmaFavorita());
 
 	}
 

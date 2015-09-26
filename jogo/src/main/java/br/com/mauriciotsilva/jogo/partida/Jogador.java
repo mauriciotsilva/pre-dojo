@@ -1,4 +1,4 @@
-package br.com.mauriciotsilva.jogo;
+package br.com.mauriciotsilva.jogo.partida;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import br.com.mauriciotsilva.jogo.io.Linha;
-import br.com.mauriciotsilva.jogo.partida.Premio;
 
 public class Jogador implements Serializable, Comparable<Jogador>, Cloneable {
 
@@ -21,69 +20,66 @@ public class Jogador implements Serializable, Comparable<Jogador>, Cloneable {
 	private int quantidadeMorte;
 	private int quantidadeAssassinato;
 
-	private LinkedList<Premio> awards;
+	private LinkedList<Premio> premios;
 	private Map<String, Integer> armaFavorita;
 
 	public Jogador(String nome) {
-		this(nome, Linha.WORLD.toString().equals(nome));
+		this(nome, !Linha.WORLD.equals(nome));
 	}
 
 	private Jogador(String nome, boolean valido) {
 		this.nome = nome;
 		this.valido = valido;
-		this.awards = new LinkedList<Premio>();
+		this.premios = new LinkedList<Premio>();
 		this.armaFavorita = new HashMap<String, Integer>();
 	}
 
-	public boolean assassinar(String arma, Jogador outroJogador)
-			throws UnsupportedOperationException, IllegalArgumentException {
+	public void assassinar(String arma, Jogador outroJogador) {
 
-		if (outroJogador == null) {
-			throw new IllegalArgumentException("Wrong player try to kill other one");
-		} else
-
-		if (equals(outroJogador)) {
-			throw new UnsupportedOperationException("Suicide is not allowed");
-		}
-
-		matar(arma, outroJogador);
-
-		return true;
-	}
-
-	private void matar(String arma, Jogador outroJogador) {
-
-		atualizarContador();
+		validarAssassinato(arma, outroJogador);
 		outroJogador.morrer();
+		atualizarContadores(arma);
+	}
 
-		Integer quantidade = armaFavorita.get(arma);
-		if (quantidade == null) {
-			armaFavorita.put(arma, 1);
-		} else {
-			armaFavorita.put(arma, ++quantidade);
+	private void validarAssassinato(String arma, Jogador outroJogador) {
+		if (outroJogador == null || equals(outroJogador)) {
+			throw new IllegalArgumentException("Wrong player try to kill other one");
 		}
 	}
 
-	private void atualizarContador() {
+	private void morrer() {
+		numeroStreak = 0;
+		quantidadeMorte++;
+	}
+
+	private void atualizarContadores(String arma) {
 		if (valido) {
 			numeroStreak++;
 			quantidadeAssassinato++;
 		}
+
+		Integer quantidade = armaFavorita.get(arma);
+		if (quantidade == null) {
+			quantidade = 0;
+		}
+
+		armaFavorita.put(arma, ++quantidade);
 	}
 
-	public void adicionarAward(Premio award) {
+	public void adicionarPremio(Premio primio) {
 
-		if (award == Premio.NORRIS)
-			awards.addFirst(award);
-		else
-			awards.add(award);
-
+		if (primio == Premio.NORRIS) {
+			premios.addFirst(primio);
+		} else {
+			premios.add(primio);
+		}
 	}
 
-	public String obterNomeArmaFavorita() {
+	public String getNomeArmaFavorita() {
 
 		int quantidade = 0;
 		String arma = null;
+
 		Set<String> armas = armaFavorita.keySet();
 		for (String a : armas) {
 			int valor = armaFavorita.get(a);
@@ -94,12 +90,7 @@ public class Jogador implements Serializable, Comparable<Jogador>, Cloneable {
 
 		}
 
-		return arma == null ? "" : arma;
-	}
-
-	private void morrer() {
-		numeroStreak = 0;
-		quantidadeMorte++;
+		return arma;
 	}
 
 	public String getNome() {
@@ -122,8 +113,8 @@ public class Jogador implements Serializable, Comparable<Jogador>, Cloneable {
 		return numeroStreak;
 	}
 
-	public List<Premio> getAwards() {
-		return awards;
+	public List<Premio> getPremios() {
+		return premios;
 	}
 
 	@Override
@@ -162,9 +153,8 @@ public class Jogador implements Serializable, Comparable<Jogador>, Cloneable {
 			return (Jogador) super.clone();
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
+			return null;
 		}
-
-		return null;
 	}
 
 	@Override

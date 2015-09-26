@@ -14,7 +14,7 @@ import br.com.mauriciotsilva.jogo.estrutura.UnexpectedDataException;
 public class Linha implements ItemModelavel {
 
 	public static final String MATOU = "killed";
-	public static final String WORLD = "<world>";
+	public static final String WORLD = "<WORLD>";
 	public static final String SEPARADOR = "-";
 	public static final String PATTER_DATAHORA = "[1-31]./+\\d{2}.(\\d{4}\\s).*\\d+[\\:].*$";
 
@@ -24,7 +24,6 @@ public class Linha implements ItemModelavel {
 	private String meioUtilizado;
 
 	public Linha(String conteudo) {
-
 		this.conteudo = conteudo;
 
 		List<String> palavras = listarPalavras();
