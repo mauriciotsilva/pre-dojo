@@ -1,8 +1,9 @@
-package br.com.mauriciotsilva.jogo;
+package br.com.mauriciotsilva.jogo.modelado;
 
 import java.util.Date;
 
 import br.com.mauriciotsilva.jogo.estrutura.ItemModelavel;
+import br.com.mauriciotsilva.jogo.partida.Jogador;
 
 public class EventoPartida implements ItemModelavel {
 

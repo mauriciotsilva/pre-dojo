@@ -3,10 +3,9 @@ package br.com.mauriciotsilva.jogo.partida;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import br.com.mauriciotsilva.jogo.Jogador;
 import br.com.mauriciotsilva.jogo.estrutura.ItemModelavel;
 
-public class Fato implements Comparable<Fato> {
+public class Acontecimento implements Comparable<Acontecimento> {
 
 	private Date data;
 	private String arma;
@@ -16,21 +15,21 @@ public class Fato implements Comparable<Fato> {
 
 	private Partida partida;
 
-	private Fato(Partida partida) {
+	private Acontecimento(Partida partida) {
 		this.partida = partida;
 	}
 
-	public static Fato criar(Partida partida, ItemModelavel item) {
+	public static Acontecimento criar(Partida partida, ItemModelavel item) {
 
-		Fato fato = new Fato(partida);
+		Acontecimento acontecimento = new Acontecimento(partida);
 
-		fato.configurarFato(item);
-		fato.gerarIdentificadorGrupo();
+		acontecimento.configurar(item);
+		acontecimento.gerarIdentificadorGrupo();
 
-		return fato;
+		return acontecimento;
 	}
 
-	private void configurarFato(ItemModelavel item) throws IllegalStateException {
+	private void configurar(ItemModelavel item) throws IllegalStateException {
 
 		if (item.isItemSistema()) {
 			throw new IllegalStateException("System line cannot be used as parameter");
@@ -53,9 +52,9 @@ public class Fato implements Comparable<Fato> {
 		jogadorUm.assassinar(arma, jogadorDois);
 	}
 
-	void adicionarPremiacaoPorMinuto(int count) {
-		if (count == 5) {
-			jogadorUm.adicionarAward(Premio.PADAWAN);
+	void adicionarPremiacaoPorMinuto(int contador) {
+		if (contador == 5) {
+			jogadorUm.adicionarPremio(Premio.PADAWAN);
 		}
 	}
 
@@ -71,14 +70,19 @@ public class Fato implements Comparable<Fato> {
 		return jogadorDois;
 	}
 
-	public int compareTo(Fato outroFato) {
+	public String getIdentificadorGrupo() {
+		return identificadorGrupo;
+	}
 
-		int comp = identificadorGrupo.compareTo(outroFato.identificadorGrupo);
-		if (comp == 0) {
-			comp = jogadorUm.compareTo(outroFato.jogadorUm);
+	@Override
+	public int compareTo(Acontecimento acontecimento) {
+
+		int comparacao = identificadorGrupo.compareTo(acontecimento.identificadorGrupo);
+		if (comparacao == 0) {
+			comparacao = jogadorUm.compareTo(acontecimento.jogadorUm);
 		}
 
-		return comp;
+		return comparacao;
 	}
 
 	@Override
@@ -98,10 +102,10 @@ public class Fato implements Comparable<Fato> {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof Fato)) {
+		if (!(obj instanceof Acontecimento)) {
 			return false;
 		}
-		Fato other = (Fato) obj;
+		Acontecimento other = (Acontecimento) obj;
 		if (identificadorGrupo == null) {
 			if (other.identificadorGrupo != null) {
 				return false;

@@ -1,17 +1,17 @@
 package br.com.mauriciotsilva.jogo.partida;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import br.com.mauriciotsilva.jogo.Jogador;
-import br.com.mauriciotsilva.jogo.estrutura.ItemModelavel;
 import br.com.mauriciotsilva.jogo.estrutura.Modelavel;
 import br.com.mauriciotsilva.jogo.partida.rank.Ranking;
-import br.com.mauriciotsilva.jogo.util.Util;
 
 public class Partida {
 
@@ -22,7 +22,7 @@ public class Partida {
 	private Map<String, Object> sessao;
 	private List<Jogador> ranking;
 	private List<Jogador> jogadores;
-	private List<List<Fato>> grupoDeFatos;
+	private Map<String, List<Acontecimento>> grupoAcontecimento;
 
 	private Partida() {
 		jogadores = new ArrayList<Jogador>();
@@ -30,47 +30,55 @@ public class Partida {
 	}
 
 	public Partida(Modelavel modelavel) {
-
 		this();
-		grupoDeFatos = listarGrupoDeFatos(modelavel);
+		grupoAcontecimento = agruparAcontecimentos(modelavel);
 
 		iniciarExecucao();
 		finalizarExecucao();
 	}
 
-	private List<List<Fato>> listarGrupoDeFatos(Modelavel modelavel) {
+	private Map<String, List<Acontecimento>> agruparAcontecimentos(Modelavel modelavel) {
 
-		List<Fato> fatos = new ArrayList<>();
+		Stream<Acontecimento> acontecimentos = modelavel.getItens().stream().filter(item -> !item.isItemSistema())
+				.map(item -> Acontecimento.criar(this, item));
 
-		for (ItemModelavel item : modelavel.getItens()) {
-			if (!item.isItemSistema()) {
-				fatos.add(Fato.criar(this, item));
-			}
-		}
-
-		return Util.groupList(fatos);
+		return acontecimentos.collect(groupingBy(Acontecimento::getIdentificadorGrupo, toList()));
 	}
 
 	private void iniciarExecucao() {
 
-		for (List<Fato> fatos : grupoDeFatos) {
+		for (List<Acontecimento> acontecimetos : grupoAcontecimento.values()) {
 
-			int countGrupo = 0;
-			for (Fato fato : fatos) {
-				countGrupo++;
-				executar(countGrupo, fato);
+			int contador = 0;
+			for (Acontecimento acontecimento : acontecimetos) {
+
+				acontecimento.executar();
+				verificarStreaker(acontecimento.getJogadorUm());
+				acontecimento.adicionarPremiacaoPorMinuto(++contador);
 			}
 		}
+	}
+
+	private void verificarStreaker(Jogador jogador) {
+
+		if (!jogador.isValido()) {
+			return;
+		}
+
+		Jogador streaker = getAtributoSessao(RANKING_STREAKER_PARTIDA);
+		if (streaker == null || streaker.getNumeroStreak() < jogador.getNumeroStreak()) {
+			criarAtributoSessao(RANKING_STREAKER_PARTIDA, jogador.clone());
+		}
+	}
+
+	void criarAtributoSessao(String chave, Object valor) {
+		sessao.put(chave, valor);
 	}
 
 	private void finalizarExecucao() {
 		definirRanking();
 		adicionarPremiacaoChuckNorris();
 		finalizada = true;
-	}
-
-	void criarAtributoSessao(String chave, Object valor) {
-		sessao.put(chave, valor);
 	}
 
 	Jogador adicionarJogador(String nome) {
@@ -85,12 +93,12 @@ public class Partida {
 
 	private Jogador adicionar(Jogador jogador) throws IllegalStateException {
 
-		if (finalizada) {
-			throw new IllegalStateException("Match has already finished");
+		if (!finalizada) {
+			jogadores.add(jogador);
+			return jogador;
 		}
 
-		jogadores.add(jogador);
-		return jogador;
+		throw new IllegalStateException("Match has already finished");
 	}
 
 	public Jogador buscarJogador(String nome) {
@@ -109,19 +117,13 @@ public class Partida {
 		return new Jogador(nome);
 	}
 
-	public Jogador obterStreaker() {
-		return obterAtributoSessao(RANKING_STREAKER_PARTIDA);
+	public Jogador getStreaker() {
+		return getAtributoSessao(RANKING_STREAKER_PARTIDA);
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> T obterAtributoSessao(String str) {
+	public <T> T getAtributoSessao(String str) {
 		return (T) sessao.get(str);
-	}
-
-	private void executar(int count, Fato fato) {
-		fato.executar();
-		verificarStreaker(fato.getJogadorUm());
-		fato.adicionarPremiacaoPorMinuto(count);
 	}
 
 	public List<Jogador> listarRankingAssassinatos() {
@@ -135,29 +137,8 @@ public class Partida {
 
 	private void adicionarPremiacaoChuckNorris() {
 		if (vencedor.getQuantidadeMorte() == 0) {
-			vencedor.adicionarAward(Premio.NORRIS);
+			vencedor.adicionarPremio(Premio.NORRIS);
 		}
-	}
-
-	private void verificarStreaker(Jogador jogador) {
-
-		if (!jogador.isValido()) {
-			return;
-		}
-
-		Jogador streaker = obterAtributoSessao(RANKING_STREAKER_PARTIDA);
-		Comparator<Jogador> comparatorStreaker = new Ranking.ComparatorStreakers();
-
-		if (streaker == null) {
-			criarAtributoSessao(RANKING_STREAKER_PARTIDA, jogador.clone());
-
-		} else {
-			int resultado = comparatorStreaker.compare(streaker, jogador);
-			if (resultado > 0) {
-				criarAtributoSessao(RANKING_STREAKER_PARTIDA, jogador.clone());
-			}
-		}
-
 	}
 
 	public Jogador getVencedor() {

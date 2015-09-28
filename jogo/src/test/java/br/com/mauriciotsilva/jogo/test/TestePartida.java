@@ -6,9 +6,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import br.com.mauriciotsilva.jogo.Jogador;
-import br.com.mauriciotsilva.jogo.ModeloPartida;
 import br.com.mauriciotsilva.jogo.estrutura.Modelavel;
+import br.com.mauriciotsilva.jogo.modelado.ModeloPartida;
+import br.com.mauriciotsilva.jogo.partida.Jogador;
 import br.com.mauriciotsilva.jogo.partida.Partida;
 
 public class TestePartida {
@@ -47,12 +47,12 @@ public class TestePartida {
 
 	@Test
 	public void testarPremiacao() {
-		Assert.assertEquals(1, partida.getVencedor().getAwards().size());
+		Assert.assertEquals(1, partida.getVencedor().getPremios().size());
 	}
 
 	@Test
 	public void testarStreakerPartida() {
-		Assert.assertEquals(vettel, partida.obterStreaker());
+		Assert.assertEquals(vettel, partida.getStreaker());
 	}
 
 	@Test

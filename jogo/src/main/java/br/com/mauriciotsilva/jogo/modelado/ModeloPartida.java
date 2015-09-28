@@ -1,4 +1,4 @@
-package br.com.mauriciotsilva.jogo;
+package br.com.mauriciotsilva.jogo.modelado;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,6 +6,7 @@ import java.util.List;
 
 import br.com.mauriciotsilva.jogo.estrutura.ItemModelavel;
 import br.com.mauriciotsilva.jogo.estrutura.Modelavel;
+import br.com.mauriciotsilva.jogo.partida.Jogador;
 
 public class ModeloPartida implements Modelavel	 {
 
