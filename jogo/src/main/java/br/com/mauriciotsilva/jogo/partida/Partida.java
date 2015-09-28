@@ -60,14 +60,11 @@ public class Partida {
 	}
 
 	private void verificarStreaker(Jogador jogador) {
-
-		if (!jogador.isValido()) {
-			return;
-		}
-
-		Jogador streaker = getAtributoSessao(RANKING_STREAKER_PARTIDA);
-		if (streaker == null || streaker.getNumeroStreak() < jogador.getNumeroStreak()) {
-			criarAtributoSessao(RANKING_STREAKER_PARTIDA, jogador.clone());
+		if (jogador.isValido()) {
+			Jogador streaker = getAtributoSessao(RANKING_STREAKER_PARTIDA);
+			if (streaker == null || streaker.getNumeroStreak() < jogador.getNumeroStreak()) {
+				criarAtributoSessao(RANKING_STREAKER_PARTIDA, jogador.clone());
+			}
 		}
 	}
 
@@ -85,7 +82,7 @@ public class Partida {
 
 		Jogador jogador = buscarJogador(nome);
 		if (jogador == null) {
-			return adicionar(criarJogador(nome));
+			jogador = adicionar(criarJogador(nome));
 		}
 
 		return jogador;
